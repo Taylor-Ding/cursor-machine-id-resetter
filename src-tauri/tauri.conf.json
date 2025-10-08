@@ -9,10 +9,10 @@
         "frontendDist": "../dist"
     },
     "bundle": {
-        "active": false,
-        "targets": [],
+        "active": true,
+        "targets": "all",
         "icon": [
-            "icons/icon.ico"
+            "icons/icon.png"
         ],
         "windows": {
             "certificateThumbprint": null,
