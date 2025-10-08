@@ -1,0 +1,75 @@
+name: ✨ 功能请求
+description: 建议一个新功能或改进
+title: "[Feature]: "
+labels: ["enhancement", "待评估"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你的功能建议！我们很乐意听取你的想法。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题描述
+      description: 你遇到了什么问题？这个功能将如何帮助你？
+      placeholder: 当我使用应用时，我发现...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 建议的解决方案
+      description: 你希望如何解决这个问题？
+      placeholder: 我认为可以添加一个功能...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 备选方案
+      description: 你考虑过哪些替代方案？
+      placeholder: 或者也可以...
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      description: 这个功能对你有多重要？
+      options:
+        - 🔴 高优先级 - 严重影响使用
+        - 🟡 中优先级 - 会很有帮助
+        - 🟢 低优先级 - 可有可无
+      default: 1
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockup
+    attributes:
+      label: 界面设计/示例
+      description: 如果适用，请提供界面设计草图或使用示例
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 其他信息
+      description: 添加其他关于功能请求的上下文信息
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 确认
+      description: 在提交之前，请确认以下内容
+      options:
+        - label: 我已经搜索过现有的 Issues，没有发现类似请求
+          required: true
+        - label: 这个功能符合项目的目标和范围
+          required: true
+        - label: 我愿意帮助实现这个功能（如果可能）
+          required: false
+

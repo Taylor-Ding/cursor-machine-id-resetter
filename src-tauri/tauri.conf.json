@@ -1,0 +1,64 @@
+{
+    "productName": "Cursor reset tool",
+    "version": "1.0.0",
+    "identifier": "com.yeongpin.cursor-machine-id-resetter",
+    "build": {
+        "beforeDevCommand": "npm run dev",
+        "devUrl": "http://localhost:5173",
+        "beforeBuildCommand": "npm run build",
+        "frontendDist": "../dist"
+    },
+    "bundle": {
+        "active": false,
+        "targets": [],
+        "icon": [
+            "icons/icon.ico"
+        ],
+        "windows": {
+            "certificateThumbprint": null,
+            "digestAlgorithm": "sha256",
+            "timestampUrl": ""
+        },
+        "macOS": {
+            "frameworks": [],
+            "minimumSystemVersion": "10.15",
+            "exceptionDomain": ""
+        }
+    },
+    "app": {
+        "windows": [
+            {
+                "title": "Cursor重置工具",
+                "width": 1000,
+                "height": 720,
+                "resizable": true,
+                "fullscreen": false,
+                "decorations": true,
+                "center": true,
+                "minWidth": 800,
+                "minHeight": 600
+            }
+        ],
+        "security": {
+            "csp": null,
+            "capabilities": [
+                {
+                    "identifier": "main-capability",
+                    "description": "Main application capability",
+                    "windows": [
+                        "main"
+                    ],
+                    "permissions": [
+                        "core:default",
+                        "core:event:allow-listen",
+                        "core:event:allow-emit",
+                        "dialog:default",
+                        "fs:default",
+                        "os:default",
+                        "shell:default"
+                    ]
+                }
+            ]
+        }
+    }
+}
