@@ -11,10 +11,6 @@
     "bundle": {
         "active": true,
         "targets": "all",
-        "icon": [
-            "icons/icon.png",
-            "icons/icon.ico"
-        ],
         "windows": {
             "certificateThumbprint": null,
             "digestAlgorithm": "sha256",
@@ -26,7 +22,15 @@
         "macOS": {
             "frameworks": [],
             "minimumSystemVersion": "10.15",
-            "exceptionDomain": ""
+            "exceptionDomain": "",
+            "icon": [
+                "icons/icon.png"
+            ]
+        },
+        "linux": {
+            "icon": [
+                "icons/icon.png"
+            ]
         }
     },
     "app": {
