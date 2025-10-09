@@ -68,8 +68,9 @@ jobs:
       - name: Run Rust tests
         run: cd src-tauri && cargo test --release
 
-      - name: Build Tauri app (without bundling)
-        run: npm run tauri build -- --bundles none
+      - name: Build app binary (no bundling)
+        working-directory: src-tauri
+        run: cargo build --release
         
       - name: Upload build artifacts (Windows)
         if: matrix.platform == 'windows-latest'
