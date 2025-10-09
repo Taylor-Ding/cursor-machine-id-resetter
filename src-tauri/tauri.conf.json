@@ -1,6 +1,6 @@
 {
     "productName": "Cursor reset tool",
-    "version": "1.0.0",
+    "version": "1.0.6",
     "identifier": "com.yeongpin.cursor-machine-id-resetter",
     "build": {
         "beforeDevCommand": "npm run dev",
