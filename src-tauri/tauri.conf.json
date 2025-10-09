@@ -28,7 +28,7 @@
             ]
         },
         "linux": {
-            "targets": "appimage"
+            "appimage": {}
         }
     },
     "app": {
