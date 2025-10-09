@@ -69,21 +69,21 @@ jobs:
         
       - name: Upload build artifacts (Windows)
         if: matrix.platform == 'windows-latest'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: src-tauri/target/release/*.exe
           
       - name: Upload build artifacts (macOS)
         if: matrix.platform == 'macos-latest'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macos-build
           path: src-tauri/target/release/cursor-machine-id-resetter
           
       - name: Upload build artifacts (Linux)
         if: matrix.platform == 'ubuntu-22.04'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-build
           path: src-tauri/target/release/cursor-machine-id-resetter
