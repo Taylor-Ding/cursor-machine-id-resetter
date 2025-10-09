@@ -195,7 +195,7 @@
             </div>
             <div class="about-content">
               <div class="about-label">{{ t('settings.version') }}</div>
-              <div class="about-value">v1.0.0</div>
+              <div class="about-value">v1.0.5</div>
             </div>
           </div>
 
@@ -216,11 +216,11 @@
             <div class="about-content">
               <div class="about-label">{{ t('settings.github') }}</div>
               <a
-                href="https://github.com/Taylor-Ding/cursor_reset"
+                href="https://github.com/Taylor-Ding/cursor-machine-id-resetter.git"
                 target="_blank"
                 class="about-link"
               >
-                Taylor-Ding/cursor_reset
+                Taylor-Ding/cursor-machine-id-resetter
               </a>
             </div>
           </div>
@@ -255,7 +255,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { 
+import {
   Settings, FolderOpen, Sliders, Info, Save, RotateCcw,
   Archive, Database, Power, Folder, HardDrive, Wrench,
   RefreshCw, Bug, Sparkles, Tag, Monitor, Github
@@ -291,18 +291,25 @@ const settings = ref<Settings>({
   debugMode: false
 })
 
+const platformKey = ref<string>('')
+
 const platformName = computed(() => {
-  const p = platform()
   const names: Record<string, string> = {
-    'windows': 'Windows',
-    'macos': 'macOS',
-    'linux': 'Linux'
+    windows: 'Windows',
+    macos: 'macOS',
+    linux: 'Linux'
   }
-  return names[p] || p
+  const p = platformKey.value
+  return (names[p] ?? (p || 'Unknown'))
 })
 
 onMounted(async () => {
   await loadSettings()
+  try {
+    platformKey.value = await platform()
+  } catch (e) {
+    console.error('Failed to get platform:', e)
+  }
 })
 
 const loadSettings = async () => {
@@ -361,7 +368,7 @@ const handleReset = async () => {
 const handleBrowsePath = async (type: 'cursor' | 'backup') => {
   try {
     console.log('Opening dialog for type:', type)
-    
+
     const selected = await open({
       directory: true,
       multiple: false,

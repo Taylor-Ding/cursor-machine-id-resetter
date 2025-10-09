@@ -20,18 +20,18 @@ jobs:
         include:
           - platform: 'windows-latest'
             args: '--target x86_64-pc-windows-msvc'
-            
+
           - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
-            
+
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
-            
+
           - platform: 'ubuntu-22.04'
             args: ''
 
     runs-on: ${{ matrix.platform }}
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -64,6 +64,16 @@ jobs:
             libjavascriptcoregtk-4.1-dev \
             libwebkit2gtk-4.1-dev
 
+      - name: Sync app version from tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Using version: $VERSION"
+          node -e "const fs=require('fs');const p='./package.json';const j=JSON.parse(fs.readFileSync(p));j.version='${VERSION}';fs.writeFileSync(p, JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const p='./src-tauri/tauri.conf.json';const j=JSON.parse(fs.readFileSync(p));j.version='${VERSION}';fs.writeFileSync(p, JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');let s=fs.readFileSync('./src-tauri/Cargo.toml','utf8');s=s.replace(/(?m)^version\\s*=\\s*\"[^\"]+\"/,'version = \"${VERSION}\"');fs.writeFileSync('./src-tauri/Cargo.toml',s);"
+
       - name: Install frontend dependencies
         run: npm ci
 
@@ -92,7 +102,7 @@ jobs:
 
             ---
             完整更新日志请查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
 
