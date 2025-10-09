@@ -22,10 +22,7 @@
         "macOS": {
             "frameworks": [],
             "minimumSystemVersion": "10.15",
-            "exceptionDomain": "",
-            "icon": [
-                "icons/icon.png"
-            ]
+            "exceptionDomain": ""
         },
         "linux": {
             "appimage": {}
