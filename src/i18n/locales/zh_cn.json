@@ -1,6 +1,6 @@
 {
     "app": {
-        "title": "Cursor重置工具"
+        "title": "IDE重置工具"
     },
     "status": {
         "ready": "就绪",
@@ -20,17 +20,21 @@
         "actions": "操作",
         "warning": "警告",
         "copy_success": "已复制到剪贴板",
-        "copy_failed": "复制失败"
+        "copy_failed": "复制失败",
+        "yes": "是",
+        "no": "否"
     },
     "tabs": {
-        "reset": "重置",
+        "cursor": "Cursor",
+        "windsurf": "Windsurf",
+        "qoder": "Qoder",
         "restore": "恢复",
         "email": "邮箱生成",
         "logs": "日志",
         "settings": "设置"
     },
     "main": {
-        "title": "Cursor重置工具",
+        "title": "IDE重置工具",
         "subtitle": "安全、快速地重置您的Cursor机器标识"
     },
     "reset": {
@@ -163,5 +167,50 @@
         "generate_success": "账号生成成功",
         "generate_failed": "账号生成失败",
         "generated_email": "生成的邮箱"
+    },
+    "qoder": {
+        "warning_title": "重要提示",
+        "warning_desc": "重置 Qoder 机器 ID 前，请根据选择的模式进行相应操作。完整重置需要关闭 Qoder，实时注入需要 Qoder 运行中且需要管理员权限。",
+        "current_info": "当前信息",
+        "machine_id": "机器 ID",
+        "status": "运行状态",
+        "running": "运行中",
+        "stopped": "已停止",
+        "installed": "已安装",
+        "process_count": "进程数量",
+        "mode_full": "完整重置",
+        "mode_full_desc": "深度清理所有数据并重置 ID（需要关闭 Qoder）",
+        "mode_simple": "仅重置 ID",
+        "mode_simple_desc": "只重置机器 ID，不清理其他数据（需要关闭 Qoder）",
+        "mode_inject": "实时注入",
+        "mode_inject_desc": "运行中修改 ID，无需重启（需要 Qoder 运行且管理员权限）",
+        "advanced": "高级",
+        "reset_options": "重置选项",
+        "option_machine_id": "重置机器 ID",
+        "option_telemetry": "清理遥测数据",
+        "option_cache": "清理缓存目录",
+        "option_identity": "清理身份文件",
+        "option_hardware": "清理硬件指纹",
+        "option_preserve": "保留 MCP 配置和对话历史",
+        "quit_qoder": "关闭 Qoder",
+        "quit_confirm_title": "确认关闭",
+        "quit_confirm_message": "确定要关闭 Qoder 吗？",
+        "quit_success": "Qoder 已成功关闭",
+        "quit_failed": "Qoder 关闭失败或未运行",
+        "quit_error": "关闭 Qoder 时出错",
+        "reset_confirm_title": "确认重置",
+        "reset_confirm_message": "此操作将重置 Qoder 的机器标识。<br/><br/><strong>请确认：</strong><br/>• 完整重置：Qoder 已关闭<br/>• 实时注入：Qoder 正在运行且以管理员身份运行本工具<br/><br/>是否继续？",
+        "reset_success": "重置成功！请重启 Qoder 应用",
+        "reset_failed": "重置失败",
+        "reset_error": "重置时出错",
+        "reset_stats": "重置统计",
+        "files_removed": "删除文件",
+        "dirs_removed": "删除目录",
+        "keys_cleared": "清理键",
+        "errors_encountered": "遇到的错误",
+        "inject_now": "立即注入",
+        "reset_full": "完整重置",
+        "reset_simple": "仅重置 ID",
+        "load_info_failed": "加载 Qoder 信息失败"
     }
 }

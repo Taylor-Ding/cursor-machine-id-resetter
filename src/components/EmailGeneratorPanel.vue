@@ -182,9 +182,10 @@ const showPassword = ref(false)
 onMounted(async () => {
   // 从设置中加载域名配置
   try {
-    const settings = await invoke('get_settings')
-    if (settings && settings.email_domain) {
-      form.value.domain = settings.email_domain
+    const settings = await invoke('get_settings') as any
+    if (settings && settings.emailDomain) {
+      form.value.domain = settings.emailDomain
+      logStore.addLog('info', `已加载域名配置: ${settings.emailDomain}`)
     }
   } catch (error) {
     console.error('Failed to load settings:', error)
@@ -221,6 +222,17 @@ const handleGenerate = async () => {
 
     logStore.addLog('success', `${t('email.generated_email')}: ${result.email}`)
     ElMessage.success(t('email.generate_success'))
+
+    // 保存域名到设置，下次自动加载
+    try {
+      const settings = await invoke('get_settings') as any
+      settings.emailDomain = form.value.domain
+      await invoke('save_settings', { settings })
+      logStore.addLog('info', `已保存域名配置: ${form.value.domain}`)
+    } catch (saveError) {
+      console.error('Failed to save domain:', saveError)
+      // 不影响主流程，不抛出错误
+    }
   } catch (error: any) {
     console.error('Generate account failed:', error)
     logStore.addLog('error', `${t('email.generate_failed')}: ${error}`)

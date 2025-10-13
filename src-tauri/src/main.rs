@@ -4,6 +4,7 @@
 mod commands;
 mod core;
 mod utils;
+mod qoder_commands;
 
 
 fn main() {
@@ -25,6 +26,17 @@ fn main() {
             commands::get_default_settings,
             commands::generate_account,
             commands::restore_file_backup,
+            // Qoder commands
+            qoder_commands::get_qoder_info,
+            qoder_commands::check_qoder_status,
+            qoder_commands::quit_qoder,
+            qoder_commands::reset_qoder_full,
+            qoder_commands::reset_qoder_machine_id,
+            // Windsurf commands
+            commands::check_windsurf_status,
+            commands::get_windsurf_info,
+            commands::reset_windsurf_machine_id,
+            commands::quit_windsurf,
         ])
         .setup(|_app| {
             #[cfg(debug_assertions)]

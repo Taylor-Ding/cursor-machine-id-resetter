@@ -1,6 +1,6 @@
 {
     "name": "cursor-machine-id-resetter",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "Cursor Machine ID Reset Tool with Tauri 2.0",
     "type": "module",
     "scripts": {

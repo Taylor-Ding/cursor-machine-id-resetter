@@ -93,6 +93,40 @@
 
         <div class="setting-card">
           <div class="setting-label-row">
+            <Folder :size="18" />
+            <span>Windsurf 路径</span>
+          </div>
+          <div class="path-input-group">
+            <el-input v-model="settings.windsurfPath" placeholder="输入或选择 Windsurf 数据路径..." />
+            <el-button @click="handleBrowsePath('windsurf')" class="browse-button">
+              <FolderOpen :size="16" />
+              <span>浏览</span>
+            </el-button>
+          </div>
+          <div class="path-hint">
+            例如: ~/Library/Application Support/Windsurf (macOS)
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <div class="setting-label-row">
+            <Folder :size="18" />
+            <span>Qoder 路径</span>
+          </div>
+          <div class="path-input-group">
+            <el-input v-model="settings.qoderPath" placeholder="输入或选择 Qoder 数据路径..." />
+            <el-button @click="handleBrowsePath('qoder')" class="browse-button">
+              <FolderOpen :size="16" />
+              <span>浏览</span>
+            </el-button>
+          </div>
+          <div class="path-hint">
+            例如: ~/Library/Application Support/Qoder (macOS)
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <div class="setting-label-row">
             <HardDrive :size="18" />
             <span>{{ t('settings.backup_path') }}</span>
           </div>
@@ -185,7 +219,7 @@
             </div>
             <div class="about-content">
               <div class="about-label">{{ t('settings.app_name') }}</div>
-              <div class="about-value">Cursor重置工具</div>
+              <div class="about-value">IDE重置工具</div>
             </div>
           </div>
 
@@ -274,10 +308,13 @@ interface Settings {
   backupLimit: number
   closeCursor: boolean
   cursorPath: string
+  windsurfPath: string
+  qoderPath: string
   backupPath: string
   patchWorkbench: boolean
   updateSystemId: boolean
   debugMode: boolean
+  emailDomain: string
 }
 
 const settings = ref<Settings>({
@@ -285,10 +322,13 @@ const settings = ref<Settings>({
   backupLimit: 10,
   closeCursor: true,
   cursorPath: '',
+  windsurfPath: '',
+  qoderPath: '',
   backupPath: '',
   patchWorkbench: true,
   updateSystemId: true,
-  debugMode: false
+  debugMode: false,
+  emailDomain: ''
 })
 
 const platformKey = ref<string>('')
@@ -556,6 +596,14 @@ const handleBrowsePath = async (type: 'cursor' | 'backup') => {
 
 .path-input-group :deep(.el-input__wrapper:hover) {
   border-color: #667eea;
+}
+
+.path-hint {
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-top: 8px;
+  padding-left: 4px;
+  font-style: italic;
 }
 
 .browse-button {

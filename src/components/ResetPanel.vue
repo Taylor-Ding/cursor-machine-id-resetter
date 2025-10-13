@@ -7,7 +7,7 @@
       </div>
       <div class="warning-content">
         <h4 class="warning-title">{{ t('reset.warning_title') }}</h4>
-        <p class="warning-desc">{{ t('reset.warning_desc') }}</p>
+        <p class="warning-desc">重置机器ID前，建议先关闭{{ ideName }}应用。重置完成后需要重启{{ ideName }}才能生效。同时需要使用管理员权限运行此工具，以避免权限问题导致重置失败。</p>
       </div>
     </div>
 
@@ -38,7 +38,7 @@
             <Package :size="28" />
           </div>
           <div class="info-card-content">
-            <div class="info-card-label">{{ t('reset.cursor_version') }}</div>
+            <div class="info-card-label">{{ ideName }} 版本</div>
             <div class="info-card-value">{{ cursorVersion || t('common.loading') }}</div>
           </div>
         </div>
@@ -209,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { 
   RefreshCcw, Info, Settings, CheckCircle, AlertCircle,
@@ -221,9 +221,27 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAppStore } from '../stores/app'
 import { useLogStore, type LogLevel } from '../stores/log'
 
+interface Props {
+  ideType?: 'cursor' | 'windsurf'
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  ideType: 'cursor'
+})
+
 const { t } = useI18n()
 const appStore = useAppStore()
 const logStore = useLogStore()
+
+// 根据 IDE 类型动态选择命令
+const commands = computed(() => ({
+  getMachineInfo: props.ideType === 'windsurf' ? 'get_windsurf_info' : 'get_machine_info',
+  resetMachineId: props.ideType === 'windsurf' ? 'reset_windsurf_machine_id' : 'reset_machine_id',
+  checkStatus: props.ideType === 'windsurf' ? 'check_windsurf_status' : 'check_cursor_status',
+  quitIDE: props.ideType === 'windsurf' ? 'quit_windsurf' : 'quit_cursor'
+}))
+
+const ideName = computed(() => props.ideType === 'windsurf' ? 'Windsurf' : 'Cursor')
 
 const currentMachineId = ref('')
 const cursorVersion = ref('')
@@ -274,21 +292,21 @@ onUnmounted(() => {
 
 const loadCurrentInfo = async () => {
   try {
-    const info = await invoke('get_machine_info')
+    const info = await invoke(commands.value.getMachineInfo)
     currentMachineId.value = info.machine_id
     cursorVersion.value = info.cursor_version
     backupCount.value = info.backup_count
   } catch (error) {
-    console.error('Failed to load machine info:', error)
-    logStore.addLog('error', t('reset.load_info_failed'))
+    console.error(`Failed to load ${ideName.value} info:`, error)
+    logStore.addLog('error', `${ideName.value} ${t('reset.load_info_failed')}`)
   }
 }
 
 const handleReset = async () => {
   try {
     await ElMessageBox.confirm(
-      t('reset.confirm_message'),
-      t('reset.confirm_title'),
+      `此操作将重置${ideName.value}机器ID。是否继续？`,
+      '确认重置',
       {
         confirmButtonText: t('common.confirm'),
         cancelButtonText: t('common.cancel'),
@@ -304,19 +322,19 @@ const handleReset = async () => {
     appStore.setStatus(t('reset.resetting'))
     logStore.addLog('info', t('reset.start_reset'))
 
-    // 先关闭 Cursor IDE
-    logStore.addLog('info', t('reset.closing_cursor'))
+    // 先关闭 IDE
+    logStore.addLog('info', `正在关闭 ${ideName.value}...`)
     try {
-      await invoke('quit_cursor')
-      logStore.addLog('success', t('reset.cursor_closed'))
+      await invoke(commands.value.quitIDE)
+      logStore.addLog('success', `${ideName.value} 已关闭`)
       progress.value = 20
     } catch (error: any) {
-      logStore.addLog('warning', `${t('reset.cursor_close_warning')}: ${error}`)
+      logStore.addLog('warning', `关闭 ${ideName.value} 失败: ${error}`)
       
       // 询问用户是否继续
       await ElMessageBox.confirm(
-        t('reset.cursor_close_failed_message'),
-        t('reset.cursor_close_failed_title'),
+        `无法自动关闭 ${ideName.value}，请手动关闭后继续。是否继续重置？`,
+        '关闭失败',
         {
           confirmButtonText: t('reset.continue_reset'),
           cancelButtonText: t('common.cancel'),
@@ -326,7 +344,7 @@ const handleReset = async () => {
     }
 
     // 调用Rust后端
-    const result = await invoke('reset_machine_id', {
+    const result = await invoke(commands.value.resetMachineId, {
       options: resetOptions.value
     }) as any
 
@@ -346,12 +364,12 @@ const handleReset = async () => {
     
     resetResult.value = {
       success: true,
-      message: t('reset.success_message'),
+      message: `机器ID已成功重置，请重启${ideName.value}应用`,
       newIds: Object.keys(newIds).length > 0 ? newIds : undefined
     }
 
-    logStore.addLog('success', t('reset.success_message'))
-    ElMessage.success(t('reset.success_message'))
+    logStore.addLog('success', `${ideName.value}机器ID已成功重置`)
+    ElMessage.success(`${ideName.value}机器ID已成功重置，请重启应用`)
 
     // 重新加载信息
     await loadCurrentInfo()
@@ -404,17 +422,17 @@ const handleReset = async () => {
 
 const handleCheckStatus = async () => {
   try {
-    const status = await invoke('check_cursor_status')
+    const status = await invoke(commands.value.checkStatus) as any
     ElMessageBox.alert(
       status.message,
-      t('reset.status_title'),
+      `${ideName.value} ${t('reset.status_title')}`,
       {
         confirmButtonText: t('common.ok'),
         type: status.is_running ? 'warning' : 'info'
       }
     )
   } catch (error) {
-    console.error('Check status failed:', error)
+    console.error(`Check ${ideName.value} status failed:`, error)
     ElMessage.error(t('reset.check_status_failed'))
   }
 }

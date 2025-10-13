@@ -99,9 +99,6 @@ jobs:
             - Windows 用户请以**管理员身份**运行
             - macOS 用户首次运行可能需要在系统偏好设置中允许
             - Linux 用户需要给 AppImage 添加可执行权限：`chmod +x *.AppImage`
-
-            ---
-            完整更新日志请查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

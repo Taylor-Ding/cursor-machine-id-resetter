@@ -3,9 +3,19 @@
     <div class="main-card">
       <!-- Tab 切换 - 直接放在顶部 -->
       <el-tabs v-model="activeTab" class="tabs">
-        <!-- 重置标签页 -->
-        <el-tab-pane :label="t('tabs.reset')" name="reset">
-          <ResetPanel />
+        <!-- Cursor 标签页 -->
+        <el-tab-pane :label="t('tabs.cursor')" name="cursor">
+          <ResetPanel ide-type="cursor" />
+        </el-tab-pane>
+
+        <!-- Windsurf 标签页 -->
+        <el-tab-pane :label="t('tabs.windsurf')" name="windsurf">
+          <ResetPanel ide-type="windsurf" />
+        </el-tab-pane>
+
+        <!-- Qoder 标签页 -->
+        <el-tab-pane :label="t('tabs.qoder')" name="qoder">
+          <QoderPanel />
         </el-tab-pane>
 
         <!-- 恢复标签页 -->
@@ -38,11 +48,12 @@ import { useI18n } from 'vue-i18n'
 import ResetPanel from '../components/ResetPanel.vue'
 import RestorePanel from '../components/RestorePanel.vue'
 import EmailGeneratorPanel from '../components/EmailGeneratorPanel.vue'
+import QoderPanel from '../components/QoderPanel.vue'
 import LogsPanel from '../components/LogsPanel.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 
 const { t } = useI18n()
-const activeTab = ref('reset')
+const activeTab = ref('cursor')
 </script>
 
 <style scoped>

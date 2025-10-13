@@ -32,7 +32,7 @@
     "app": {
         "windows": [
             {
-                "title": "Cursor重置工具",
+                "title": "IDE重置工具",
                 "width": 1000,
                 "height": 720,
                 "resizable": true,

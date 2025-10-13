@@ -385,3 +385,234 @@ pub async fn restore_file_backup(app: AppHandle, file_type: String) -> Result<St
     }
 }
 
+// ==================== Windsurf 相关命令 ====================
+
+/// 检查 Windsurf 运行状态
+#[tauri::command]
+pub async fn check_windsurf_status(app: AppHandle) -> Result<CursorStatus, String> {
+    use crate::core::ide_resetter::IDEResetter;
+    
+    emit_log(&app, LogLevel::Info, "正在检查 Windsurf 运行状态...");
+    
+    let resetter = IDEResetter::new_windsurf().map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("初始化失败: {}", e));
+        e.to_string()
+    })?;
+    
+    let is_running = resetter.is_running();
+    
+    if is_running {
+        emit_log(&app, LogLevel::Warning, "Windsurf 正在运行，请先关闭");
+    } else {
+        emit_log(&app, LogLevel::Success, "Windsurf 未运行");
+    }
+    
+    Ok(CursorStatus {
+        is_running,
+        message: if is_running {
+            "Windsurf is currently running. Please close it before resetting.".to_string()
+        } else {
+            "Windsurf is not running.".to_string()
+        },
+    })
+}
+
+/// 获取 Windsurf 信息
+#[tauri::command]
+pub async fn get_windsurf_info(app: AppHandle) -> Result<MachineInfo, String> {
+    use crate::core::ide_resetter::IDEResetter;
+    use crate::core::ide_config::IDEConfig;
+    use std::path::PathBuf;
+    
+    emit_log(&app, LogLevel::Info, "开始获取 Windsurf 信息...");
+    
+    // 读取用户设置的路径
+    let settings_manager = SettingsManager::new().map_err(|e| e.to_string())?;
+    let settings = settings_manager.load_settings().map_err(|e| e.to_string())?;
+    
+    // 创建 Windsurf 配置
+    let mut config = IDEConfig::windsurf();
+    
+    // 如果用户设置了自定义路径，使用自定义路径
+    if let Some(custom_path) = settings.get("windsurfPath").and_then(|v| v.as_str()) {
+        if !custom_path.is_empty() {
+            let path = PathBuf::from(custom_path);
+            if path.exists() {
+                config.set_custom_path(path);
+                emit_log(&app, LogLevel::Info, format!("使用用户配置的 Windsurf 路径: {}", custom_path));
+            }
+        }
+    }
+    
+    let resetter = IDEResetter::new_with_config(config).map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("初始化失败: {}", e));
+        e.to_string()
+    })?;
+    
+    if !resetter.is_installed() {
+        emit_log(&app, LogLevel::Warning, "Windsurf 未安装或数据目录不存在");
+        return Err("Windsurf not installed or data directory not found".to_string());
+    }
+    
+    let data_path = resetter.get_data_path().map_err(|e| e.to_string())?;
+    emit_log(&app, LogLevel::Info, format!("数据路径: {}", data_path.display()));
+    
+    let backup_manager = BackupManager::new().map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("初始化备份管理器失败: {}", e));
+        e.to_string()
+    })?;
+    
+    let backups = backup_manager.list_backups().map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("获取备份列表失败: {}", e));
+        e.to_string()
+    })?;
+    
+    // 获取机器ID和版本
+    let machine_id = resetter.get_current_machine_id()
+        .unwrap_or_else(|| "未找到".to_string());
+    emit_log(&app, LogLevel::Info, format!("当前机器 ID: {}", machine_id));
+    
+    let ide_version = resetter.get_ide_version()
+        .unwrap_or_else(|| "Unknown".to_string());
+    emit_log(&app, LogLevel::Info, format!("Windsurf 版本: {}", ide_version));
+    
+    emit_log(&app, LogLevel::Success, format!("成功获取 Windsurf 信息，共有 {} 个备份", backups.len()));
+    
+    Ok(MachineInfo {
+        machine_id,
+        cursor_version: ide_version,
+        backup_count: backups.len(),
+    })
+}
+
+/// 重置 Windsurf 机器 ID
+#[tauri::command]
+pub async fn reset_windsurf_machine_id(
+    app: AppHandle,
+    _options: Vec<String>,
+) -> Result<ResetResult, String> {
+    use crate::core::ide_resetter::IDEResetter;
+    
+    emit_log(&app, LogLevel::Info, "========== 开始 Windsurf 重置流程 ==========");
+    
+    let mut resetter = IDEResetter::new_windsurf().map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("初始化重置器失败: {}", e));
+        e.to_string()
+    })?;
+    
+    if !resetter.is_installed() {
+        let msg = "Windsurf 未安装或数据目录不存在".to_string();
+        emit_log(&app, LogLevel::Error, &msg);
+        return Err(msg);
+    }
+    
+    match resetter.reset(&app) {
+        Ok(result) => {
+            let message = format!(
+                "重置成功: {} 个文件处理, {} 个键更新, {} 个数据库清理, {} 个缓存目录清理",
+                result.telemetry_result.files_processed,
+                result.telemetry_result.keys_updated,
+                result.database_result.databases_processed,
+                result.cache_result.directories_cleaned
+            );
+            
+            emit_log(&app, LogLevel::Success, &message);
+            
+            Ok(ResetResult {
+                success: true,
+                message,
+                new_ids: std::collections::HashMap::new(),
+            })
+        }
+        Err(e) => {
+            let error_msg = format!("重置失败: {}", e);
+            emit_log(&app, LogLevel::Error, &error_msg);
+            emit_log(&app, LogLevel::Error, "========== Windsurf 重置失败 ==========");
+            Err(error_msg)
+        }
+    }
+}
+
+/// 关闭 Windsurf
+#[tauri::command]
+pub async fn quit_windsurf(app: AppHandle) -> Result<bool, String> {
+    emit_log(&app, LogLevel::Info, "========== 开始关闭 Windsurf IDE ==========");
+    
+    #[cfg(target_os = "macos")]
+    {
+        use std::process::Command;
+        
+        let output = Command::new("osascript")
+            .arg("-e")
+            .arg("tell application \"Windsurf\" to quit")
+            .output();
+            
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    emit_log(&app, LogLevel::Success, "========== Windsurf IDE 已成功关闭 ==========");
+                    Ok(true)
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    emit_log(&app, LogLevel::Warning, format!("关闭 Windsurf 可能失败: {}", stderr));
+                    Ok(false)
+                }
+            }
+            Err(e) => {
+                emit_log(&app, LogLevel::Error, format!("执行关闭命令失败: {}", e));
+                Err(e.to_string())
+            }
+        }
+    }
+    
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        
+        let output = Command::new("taskkill")
+            .args(&["/F", "/IM", "Windsurf.exe"])
+            .output();
+            
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    emit_log(&app, LogLevel::Success, "========== Windsurf IDE 已成功关闭 ==========");
+                    Ok(true)
+                } else {
+                    emit_log(&app, LogLevel::Warning, "Windsurf 可能未运行");
+                    Ok(false)
+                }
+            }
+            Err(e) => {
+                emit_log(&app, LogLevel::Error, format!("执行关闭命令失败: {}", e));
+                Err(e.to_string())
+            }
+        }
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        use std::process::Command;
+        
+        let output = Command::new("pkill")
+            .arg("-9")
+            .arg("windsurf")
+            .output();
+            
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    emit_log(&app, LogLevel::Success, "========== Windsurf IDE 已成功关闭 ==========");
+                    Ok(true)
+                } else {
+                    emit_log(&app, LogLevel::Warning, "Windsurf 可能未运行");
+                    Ok(false)
+                }
+            }
+            Err(e) => {
+                emit_log(&app, LogLevel::Error, format!("执行关闭命令失败: {}", e));
+                Err(e.to_string())
+            }
+        }
+    }
+}

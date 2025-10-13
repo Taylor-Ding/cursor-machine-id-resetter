@@ -41,10 +41,13 @@ impl SettingsManager {
             "backupLimit": 10,
             "closeCursor": true,
             "cursorPath": "",
+            "windsurfPath": "",
+            "qoderPath": "",
             "backupPath": "",
             "patchWorkbench": true,
             "updateSystemId": true,
-            "debugMode": false
+            "debugMode": false,
+            "emailDomain": ""
         })
     }
 }
