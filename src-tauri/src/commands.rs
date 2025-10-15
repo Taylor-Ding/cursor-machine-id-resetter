@@ -5,6 +5,7 @@ use crate::core::{
     settings::SettingsManager,
     cursor_quitter::quit_cursor_default,
     email_generator::{EmailGenerator, AccountInfo},
+    account_history::{AccountHistoryManager, AccountHistoryItem},
 };
 use crate::utils::logger::{emit_log, LogLevel};
 use serde::{Deserialize, Serialize};
@@ -334,6 +335,25 @@ pub async fn generate_account(
     emit_log(&app, LogLevel::Success, format!("名: {}", account_info.first_name));
     emit_log(&app, LogLevel::Success, format!("姓: {}", account_info.last_name));
     emit_log(&app, LogLevel::Info, format!("密码长度: {}", account_info.password.len()));
+    
+    // 保存到历史记录
+    match AccountHistoryManager::new() {
+        Ok(history_manager) => {
+            match history_manager.add_account(account_info.clone(), domain.clone()) {
+                Ok(id) => {
+                    emit_log(&app, LogLevel::Info, format!("历史记录已保存，ID: {}", id));
+                }
+                Err(e) => {
+                    emit_log(&app, LogLevel::Warning, format!("保存历史记录失败: {}", e));
+                    // 不影响主流程，继续返回
+                }
+            }
+        }
+        Err(e) => {
+            emit_log(&app, LogLevel::Warning, format!("初始化历史记录管理器失败: {}", e));
+        }
+    }
+    
     emit_log(&app, LogLevel::Success, "========== 账号生成完成 ==========");
     
     Ok(account_info)
@@ -615,4 +635,63 @@ pub async fn quit_windsurf(app: AppHandle) -> Result<bool, String> {
             }
         }
     }
+}
+
+// ==================== 账号历史记录相关命令 ====================
+
+/// 获取账号历史记录
+#[tauri::command]
+pub async fn get_account_history(app: AppHandle) -> Result<Vec<AccountHistoryItem>, String> {
+    emit_log(&app, LogLevel::Info, "正在获取账号历史记录...");
+    
+    let history_manager = AccountHistoryManager::new().map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("初始化历史记录管理器失败: {}", e));
+        e.to_string()
+    })?;
+    
+    let items = history_manager.get_all_accounts().map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("获取历史记录失败: {}", e));
+        e.to_string()
+    })?;
+    
+    emit_log(&app, LogLevel::Success, format!("成功获取 {} 条历史记录", items.len()));
+    Ok(items)
+}
+
+/// 删除单条账号历史记录
+#[tauri::command]
+pub async fn delete_account_history(app: AppHandle, id: String) -> Result<String, String> {
+    emit_log(&app, LogLevel::Info, format!("正在删除历史记录: {}", id));
+    
+    let history_manager = AccountHistoryManager::new().map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("初始化历史记录管理器失败: {}", e));
+        e.to_string()
+    })?;
+    
+    history_manager.delete_account(&id).map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("删除历史记录失败: {}", e));
+        e.to_string()
+    })?;
+    
+    emit_log(&app, LogLevel::Success, format!("历史记录删除成功: {}", id));
+    Ok("历史记录删除成功".to_string())
+}
+
+/// 清空所有账号历史记录
+#[tauri::command]
+pub async fn clear_account_history(app: AppHandle) -> Result<String, String> {
+    emit_log(&app, LogLevel::Info, "正在清空所有历史记录...");
+    
+    let history_manager = AccountHistoryManager::new().map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("初始化历史记录管理器失败: {}", e));
+        e.to_string()
+    })?;
+    
+    history_manager.clear_all().map_err(|e| {
+        emit_log(&app, LogLevel::Error, format!("清空历史记录失败: {}", e));
+        e.to_string()
+    })?;
+    
+    emit_log(&app, LogLevel::Success, "所有历史记录已清空");
+    Ok("所有历史记录已清空".to_string())
 }

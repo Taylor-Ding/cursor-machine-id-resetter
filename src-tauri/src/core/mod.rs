@@ -6,6 +6,7 @@ pub mod patcher;
 pub mod system;
 pub mod cursor_quitter;
 pub mod email_generator;
+pub mod account_history;
 pub mod qoder;
 
 // Windsurf 支持模块

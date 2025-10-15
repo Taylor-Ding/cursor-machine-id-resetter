@@ -146,6 +146,118 @@
         <span>{{ generating ? t('email.generating') : t('email.generate') }}</span>
       </el-button>
     </div>
+
+    <!-- 历史记录区域 -->
+    <div v-if="history.length > 0" class="history-section">
+      <div class="section-header">
+        <div class="section-header-left">
+          <div class="section-icon section-icon-history">
+            <History :size="20" />
+          </div>
+          <h3 class="section-title">{{ t('email.history_title') }}</h3>
+          <span class="history-count">{{ history.length }}</span>
+        </div>
+        <el-button
+          size="small"
+          type="danger"
+          text
+          @click="handleClearHistory"
+          :disabled="history.length === 0"
+        >
+          <Trash2 :size="16" />
+          <span>{{ t('email.clear_history') }}</span>
+        </el-button>
+      </div>
+
+      <div class="history-list">
+        <transition-group name="list">
+          <el-card
+            v-for="item in history"
+            :key="item.id"
+            class="history-card"
+            :class="{ 'is-expanded': item.expanded }"
+            shadow="hover"
+          >
+            <div class="history-item">
+              <div class="history-header" @click="toggleHistoryItem(item.id)">
+                <div class="history-summary">
+                  <div class="history-time">
+                    <Clock :size="14" />
+                    <span>{{ formatDate(item.created_at) }}</span>
+                  </div>
+                  <div class="history-email-preview">
+                    <Mail :size="14" />
+                    <code>{{ item.account_info.email }}</code>
+                  </div>
+                </div>
+                <div class="history-actions" @click.stop>
+                  <el-button
+                    size="small"
+                    text
+                    @click="toggleHistoryItem(item.id)"
+                    class="expand-btn"
+                  >
+                    <ChevronDown v-if="!item.expanded" :size="16" />
+                    <ChevronUp v-else :size="16" />
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="danger"
+                    text
+                    @click="handleDeleteHistory(item.id)"
+                  >
+                    <X :size="16" />
+                  </el-button>
+                </div>
+              </div>
+
+              <transition name="expand">
+                <div v-if="item.expanded" class="history-content">
+                  <div class="history-info-item">
+                    <div class="history-label">
+                      <Mail :size="14" />
+                      <span>{{ t('email.email') }}</span>
+                    </div>
+                    <div class="history-value">
+                      <code>{{ item.account_info.email }}</code>
+                      <el-button size="small" text @click="copyToClipboard(item.account_info.email)">
+                        <Copy :size="14" />
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <div class="history-info-item">
+                    <div class="history-label">
+                      <Key :size="14" />
+                      <span>{{ t('email.password') }}</span>
+                    </div>
+                    <div class="history-value">
+                      <code>{{ item.account_info.password }}</code>
+                      <el-button size="small" text @click="copyToClipboard(item.account_info.password)">
+                        <Copy :size="14" />
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <div class="history-info-item">
+                    <div class="history-label">
+                      <User :size="14" />
+                      <span>{{ t('email.name') }}</span>
+                    </div>
+                    <div class="history-value">
+                      <code>{{ item.account_info.first_name }} {{ item.account_info.last_name }}</code>
+                      <el-button size="small" text @click="copyToClipboard(item.account_info.first_name)">
+                        <Copy :size="14" />
+                      </el-button>
+                    </div>
+                  </div>
+                </div>
+              </transition>
+            </div>
+          </el-card>
+        </transition-group>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -153,10 +265,11 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  Info, Settings, Mail, Key, User, Copy, Eye, EyeOff, Sparkles, UserCheck
+  Info, Settings, Mail, Key, User, Copy, Eye, EyeOff, Sparkles, UserCheck,
+  History, Trash2, Clock, X, ChevronDown, ChevronUp
 } from 'lucide-vue-next'
 import { invoke } from '@tauri-apps/api/core'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useLogStore } from '../stores/log'
 
 const { t } = useI18n()
@@ -169,6 +282,14 @@ interface AccountInfo {
   last_name: string
 }
 
+interface HistoryItem {
+  id: string
+  account_info: AccountInfo
+  created_at: string
+  domain: string
+  expanded?: boolean
+}
+
 const form = ref({
   domain: '',
   passwordLength: 16,
@@ -178,6 +299,7 @@ const form = ref({
 const accountInfo = ref<AccountInfo | null>(null)
 const generating = ref(false)
 const showPassword = ref(false)
+const history = ref<HistoryItem[]>([])
 
 onMounted(async () => {
   // 从设置中加载域名配置
@@ -190,7 +312,29 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to load settings:', error)
   }
+
+  // 加载历史记录
+  await loadHistory()
 })
+
+const loadHistory = async () => {
+  try {
+    const items = await invoke('get_account_history') as HistoryItem[]
+    // 默认所有记录都是折叠状态
+    history.value = items.map(item => ({ ...item, expanded: false }))
+    logStore.addLog('info', `已加载 ${items.length} 条历史记录`)
+  } catch (error: any) {
+    console.error('Failed to load history:', error)
+    logStore.addLog('error', `加载历史记录失败: ${error}`)
+  }
+}
+
+const toggleHistoryItem = (id: string) => {
+  const item = history.value.find(h => h.id === id)
+  if (item) {
+    item.expanded = !item.expanded
+  }
+}
 
 const copyToClipboard = async (text: string) => {
   try {
@@ -223,6 +367,9 @@ const handleGenerate = async () => {
     logStore.addLog('success', `${t('email.generated_email')}: ${result.email}`)
     ElMessage.success(t('email.generate_success'))
 
+    // 重新加载历史记录
+    await loadHistory()
+
     // 保存域名到设置，下次自动加载
     try {
       const settings = await invoke('get_settings') as any
@@ -240,6 +387,63 @@ const handleGenerate = async () => {
   } finally {
     generating.value = false
   }
+}
+
+const handleDeleteHistory = async (id: string) => {
+  try {
+    await ElMessageBox.confirm(
+      t('email.delete_history_confirm'),
+      t('common.warning'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+      }
+    )
+
+    await invoke('delete_account_history', { id })
+    ElMessage.success(t('email.delete_history_success'))
+    await loadHistory()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('Failed to delete history:', error)
+      ElMessage.error(t('email.delete_history_failed'))
+    }
+  }
+}
+
+const handleClearHistory = async () => {
+  try {
+    await ElMessageBox.confirm(
+      t('email.clear_history_confirm'),
+      t('common.warning'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+      }
+    )
+
+    await invoke('clear_account_history')
+    ElMessage.success(t('email.clear_history_success'))
+    await loadHistory()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('Failed to clear history:', error)
+      ElMessage.error(t('email.clear_history_failed'))
+    }
+  }
+}
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 </script>
 
@@ -500,6 +704,203 @@ const handleGenerate = async () => {
 
 :deep(.el-slider__bar) {
   background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 历史记录区域 */
+.history-section {
+  margin-top: 32px;
+}
+
+.section-icon-history {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.history-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
+.history-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.history-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.history-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.history-card.is-expanded {
+  border-color: #667eea;
+}
+
+.history-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e4e7ed;
+  transition: all 0.2s;
+}
+
+.history-header:hover {
+  background: #f5f7fa;
+  margin: -20px -20px 0 -20px;
+  padding: 20px 20px 12px 20px;
+}
+
+.history-summary {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #909399;
+}
+
+.history-email-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-email-preview code {
+  padding: 4px 8px;
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: #303133;
+  font-weight: 500;
+}
+
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.expand-btn {
+  color: #909399;
+  transition: all 0.2s;
+}
+
+.expand-btn:hover {
+  color: #667eea;
+  transform: scale(1.1);
+}
+
+.history-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.history-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #909399;
+  font-weight: 600;
+}
+
+.history-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-value code {
+  flex: 1;
+  padding: 6px 10px;
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 12px;
+  color: #303133;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+/* 列表过渡动画 */
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
+}
+
+.list-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.list-move {
+  transition: transform 0.3s ease;
+}
+
+/* 展开/折叠动画 */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 500px;
+  padding-top: 16px;
 }
 </style>
 

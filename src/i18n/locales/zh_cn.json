@@ -164,9 +164,18 @@
         "password": "密码",
         "first_name": "名",
         "last_name": "姓",
+        "name": "姓名",
         "generate_success": "账号生成成功",
         "generate_failed": "账号生成失败",
-        "generated_email": "生成的邮箱"
+        "generated_email": "生成的邮箱",
+        "history_title": "历史记录",
+        "clear_history": "清空全部",
+        "delete_history_confirm": "确定要删除这条历史记录吗？",
+        "delete_history_success": "删除成功",
+        "delete_history_failed": "删除失败",
+        "clear_history_confirm": "确定要清空所有历史记录吗？",
+        "clear_history_success": "清空成功",
+        "clear_history_failed": "清空失败"
     },
     "qoder": {
         "warning_title": "重要提示",

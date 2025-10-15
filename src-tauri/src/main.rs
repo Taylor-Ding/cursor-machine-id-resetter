@@ -26,6 +26,9 @@ fn main() {
             commands::get_default_settings,
             commands::generate_account,
             commands::restore_file_backup,
+            commands::get_account_history,
+            commands::delete_account_history,
+            commands::clear_account_history,
             // Qoder commands
             qoder_commands::get_qoder_info,
             qoder_commands::check_qoder_status,
